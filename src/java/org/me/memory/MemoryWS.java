@@ -499,6 +499,59 @@ rs.close();
 		}
 		return sender;
     }
+
+    /**
+     * Web service operation
+     */
+    @WebMethod(operationName = "acceptInvite")
+    @Oneway
+    public void acceptInvite() {
+        
+		Connection conn = null;
+		Statement stmt = null;
+
+		try {
+			conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+			stmt = conn.createStatement();
+
+			String sql = " Update Friends "
+			+ "set status = 1";
+			//+ "where F_ID=1";
+			
+			stmt.executeUpdate(sql);
+			
+			stmt = conn.createStatement();
+			sql = "SELECT RESOURCE_POINTS FROM USERS WHERE U_ID ="
+					+ " (SELECT Sender_Id FROM friends) ";
+			ResultSet rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				// Retrieve by column name
+				int points = rs.getInt("Resource_Points");
+				points = points + 10;
+				System.out.println(points + "mm");
+
+				sql = "UPDATE Users " + "SET Resource_Points = " + points + " "
+						+ "where U_ID = (SELECT Sender_ID FROM Friends )";
+			}
+			rs.close();
+			stmt.executeUpdate(sql);
+			
+
+		} catch (SQLException e) {
+			System.err.println(e);
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		}
+    }
     
 
    
