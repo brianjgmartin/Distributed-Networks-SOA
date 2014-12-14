@@ -19,6 +19,8 @@
     <message name="addMemoryResponse"/>
     <message name="delete"/>
     <message name="deleteResponse"/>
+    <message name="viewUsers"/>
+    <message name="viewUsersResponse"/>
     <portType name="MemoryWS">
         <operation name="test">
             <input message="tns:test"/>
@@ -48,6 +50,10 @@
             <input message="tns:delete"/>
             <output message="tns:deleteResponse"/>
         </operation>
+        <operation name="viewUsers">
+            <input message="tns:viewUsers"/>
+            <output message="tns:viewUsersResponse"/>
+        </operation>
     </portType>
     <binding name="MemoryWSPortBinding" type="tns:MemoryWS">
         <wsp:PolicyReference URI="#MemoryWSPortBindingPolicy"/>
@@ -76,6 +82,10 @@
             <output/>
         </operation>
         <operation name="delete">
+            <input/>
+            <output/>
+        </operation>
+        <operation name="viewUsers">
             <input/>
             <output/>
         </operation>

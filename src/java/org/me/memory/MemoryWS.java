@@ -236,7 +236,7 @@ public class MemoryWS extends ConnectionDB{
      * Web service operation
      */
     @WebMethod(operationName = "delete")
-    public String delete(@WebParam(name = "memory") String memory) {
+    public void delete(@WebParam(name = "memory") String memory) {
        Connection conn = null;
 		Statement stmt = null;
 		try {
@@ -261,7 +261,7 @@ public class MemoryWS extends ConnectionDB{
 				}
 
 			}
-		}return "Memory " + memory+ "Deleted";
+		}
     }
 
     /**
@@ -303,12 +303,12 @@ rs.close();
 						+ " (SELECT U_ID FROM Memories where Memory = '"
 						+ memory + "') ";
 				rs = stmt.executeQuery(sql);
-				rs = stmt.executeQuery(sql);
+				
 				while (rs.next()) {
 					// Retrieve by column name
 					int id = rs.getInt("Resource_Points");
 					id = id - 2;
-					System.out.println(id + "mm");
+					
 
 					sql = "UPDATE Users " + "SET Resource_Points = " + id + " "
 							+ "where U_ID = (SELECT U_ID FROM Memories where'"
@@ -318,7 +318,7 @@ rs.close();
 				stmt.executeUpdate(sql);
 				flag = false;
 
-				System.out.println("Congrats you have added a resource");
+				
 				// while goes here
 			} while (flag);
 
@@ -375,7 +375,7 @@ rs.close();
 
 			}
 		}
-		return "Your current stored Memories are" + "\n" + result;
+		return   result;
     }
 
     /**
@@ -552,10 +552,249 @@ rs.close();
 			}
 		}
     }
+
+    /**
+     * Web service operation
+     */
+    @WebMethod(operationName = "viewPoints")
+    public Integer viewPoints() {
+       Connection conn = null;
+		Statement stmt = null;
+		int points = 0;
+
+		try {
+			conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+			stmt = conn.createStatement();
+
+			String sql = "Select resource_points from users "
+					+ "where U_ID = '"+getUserID()+"'";
+
+			ResultSet rs=stmt.executeQuery(sql);
+			while(rs.next()){
+				points = rs.getInt("resource_points");
+			}
+
+		} catch (SQLException e) {
+			
+			System.err.println(e);
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}return points;
+    }
+
+    /**
+     * Web service operation
+     */
+    @WebMethod(operationName = "shareMemory")
+    @Oneway
+    public void shareMemory(@WebParam(name = "memory") String memory, @WebParam(name = "username") String username) {
+    Connection conn = null;
+		Statement stmt = null;
+		int points = 0;
+		try{
+			conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+		System.out.println("connected Tble");
+		//STEP 4: Execute a query
+	      System.out.println("Inserting records into the Memory table...");
+	      stmt = conn.createStatement();
+	      
+	      String sql = "INSERT INTO Memories(Memory,U_ID) " +
+                   "VALUES ('"+memory+"',(Select U_ID from users where USERNAME = '"+username+"'))";
+	      stmt.executeUpdate(sql);
+	      
+	      stmt = conn.createStatement();
+	       sql = "Select resource_points from users "
+					+ "where USERNAME = '"+username+"'";
+	      	
+			ResultSet rs=stmt.executeQuery(sql);
+			while(rs.next()){
+			points = rs.getInt("resource_points");
+				points = points+5;
+			}
+		
+			stmt.executeQuery(sql);
+			rs.close();
+			
+			stmt = conn.createStatement();
+			 				
+			 sql = "UPDATE Users " +
+	                   "SET Resource_Points = "+points+" "
+	                   		+ "where USERNAME = '"+username+"'";
+	      stmt.executeUpdate(sql);
+	     
+		}
+		catch(SQLException e){
+			System.err.println(e);
+		}finally{
+			if(conn != null){
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+    }
+
+    /**
+     * Web service operation
+     */
+    @WebMethod(operationName = "transferPoints")
+    @Oneway
+    public void transferPoints(@WebParam(name = "mypoints") int mypoints, @WebParam(name = "username") String username) {
+   int points = 0;
+		int userpoints = 0;
+		Connection conn = null;
+		Statement stmt = null;
+		try{
+			conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+		
+//		  get User points and deduct by user input
+	      stmt = conn.createStatement();
+	      String sql = "Select resource_points from users "
+					+ "where U_ID = "+getUserID()+"";
+	      	
+			ResultSet rs=stmt.executeQuery(sql);
+			while(rs.next()){
+				points = rs.getInt("resource_points");
+				points = points-mypoints;
+			}
+		
+			stmt.executeQuery(sql);
+			rs.close();
+			
+			stmt = conn.createStatement();
+			 				
+			String sqli = "UPDATE Users " +
+	                   "SET Resource_Points = "+points+" "
+	                   		+ "where U_ID= '"+getUserID()+"'";
+	      stmt.executeUpdate(sqli);
+//	      -------------------------------------------
+	      
+//	      ------------Update Chosen User points-------
+	      stmt = conn.createStatement();
+	    String   sqll = "Select resource_points from users "
+					+ "where username = '"+username+"'";
+	      	
+			 rs=stmt.executeQuery(sqll);
+			while(rs.next()){
+				userpoints = rs.getInt("resource_points");
+				userpoints = userpoints+mypoints;
+			}
+		
+			stmt.executeQuery(sqll);
+			rs.close();
+			
+			stmt = conn.createStatement();
+//			 				
+		String sqlit = "UPDATE Users " +
+				 "SET Resource_Points = "+userpoints+" "
+            		+ "where USERNAME= '"+username+"'";
+		stmt.executeUpdate(sqlit);
+	      
+		}
+		catch(SQLException e){
+			System.err.println(e);
+		}finally{
+			if(conn != null){
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		}
+    }
+
+    /**
+     * Web service operation
+     */
+    @WebMethod(operationName = "deleteResource")
+    public void deleteResource(@WebParam(name = "resource") String resource) {
+       Connection conn = null;
+		Statement stmt = null;
+		try {
+			conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+			stmt = conn.createStatement();
+
+			String sql = "DELETE FROM Resources " + "where resource like '" + resource
+					+ "'"
+					+ "and U_ID = (select U_ID from users where username ='"
+					+ getUser() + "')";
+			stmt.executeUpdate(sql);
+
+		} catch (SQLException e) {
+			System.err.println(e);
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+    }
+
+    /**
+     * Web service operation
+     */
+    @WebMethod(operationName = "viewUsers")
+    public String viewUsers() {
+       Connection conn = null;
+		Statement stmt = null;
+
+		String result = "";
+
+		try {
+			conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+			stmt = conn.createStatement();
+
+			String sql = "Select username FROM users";
+					
+			ResultSet rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+
+				result = rs.getString(1) + " " + result;
+			}
+
+		} catch (SQLException e) {
+			System.err.println(e);
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+		return   result;
+    }
+    }
+
+   
+ 
+
     
 
    
-    }
+    
 
     
 
